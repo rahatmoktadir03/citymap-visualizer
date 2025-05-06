@@ -1,9 +1,8 @@
-import type { LinksFunction, LoaderArgs } from "@remix-run/node";
-import { json, redirect } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
+import { json, redirect } from '@remix-run/node';
 import {
   Form,
   Links,
-  LiveReload,
   Meta,
   NavLink,
   Outlet,
@@ -12,40 +11,32 @@ import {
   useLoaderData,
   useNavigation,
   useSubmit,
-} from "@remix-run/react";
-import { useEffect } from "react";
+} from '@remix-run/react';
+import { useEffect } from 'react';
 
-import appStylesHref from "./app.css";
-import { createEmptyContact, getContacts } from "./data";
+import appStylesHref from './app.css?url';
 
-export const action = async () => {
-  const contact = await createEmptyContact();
-  return redirect(`/contacts/${contact.id}/edit`);
-};
+import { getCities } from './data';
 
-export const links: LinksFunction = () => [
-  { rel: "stylesheet", href: appStylesHref },
-];
+export const links: LinksFunction = () => [{ rel: 'stylesheet', href: appStylesHref }];
 
-export const loader = async ({ request }: LoaderArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
-  const q = url.searchParams.get("q");
-  const contacts = await getContacts(q);
-  return json({ contacts, q });
+  const q = url.searchParams.get('q');
+  const cities = await getCities(q);
+  return json({ cities, q });
 };
 
 export default function App() {
-  const { contacts, q } = useLoaderData<typeof loader>();
+  const { cities, q } = useLoaderData<typeof loader>();
   const navigation = useNavigation();
   const submit = useSubmit();
-  const searching =
-    navigation.location &&
-    new URLSearchParams(navigation.location.search).has("q");
+  const searching = navigation.location && new URLSearchParams(navigation.location.search).has('q');
 
   useEffect(() => {
-    const searchField = document.getElementById("q");
+    const searchField = document.getElementById('q');
     if (searchField instanceof HTMLInputElement) {
-      searchField.value = q || "";
+      searchField.value = q || '';
     }
   }, [q]);
 
@@ -59,72 +50,62 @@ export default function App() {
       </head>
       <body>
         <div id="sidebar">
-          <h1>Remix Contacts</h1>
-          <div>
+          <h1 className="bg-blue-300">Build Project Cities</h1>
+          <div className="bg-blue-300">
             <Form
               id="search-form"
               onChange={(event) => {
                 const isFirstSearch = q === null;
-                submit(event.currentTarget, { replace: !isFirstSearch });
+                submit(event.currentTarget, {
+                  replace: !isFirstSearch,
+                });
               }}
               role="search"
             >
               <input
-                aria-label="Search contacts"
-                className={searching ? "loading" : ""}
-                defaultValue={q || ""}
                 id="q"
-                name="q"
+                aria-label="Search contacts"
+                className={searching ? 'loading' : ''}
+                defaultValue={q || ''}
                 placeholder="Search"
                 type="search"
+                name="q"
+                className="bg-white"
               />
-              <div aria-hidden hidden={!searching} id="search-spinner" />
+              <div id="search-spinner" aria-hidden hidden={!searching} />
             </Form>
             <Form method="post">
-              <button type="submit">New</button>
+              <button className="bg-white" type="submit">
+                New
+              </button>
             </Form>
           </div>
-          <nav>
-            {contacts.length ? (
+          <nav className="bg-blue-300">
+            {cities.length ? (
               <ul>
-                {contacts.map((contact) => (
-                  <li key={contact.id}>
+                {cities.map((city) => (
+                  <li key={city.id}>
                     <NavLink
-                      className={({ isActive, isPending }) =>
-                        isActive ? "active" : isPending ? "pending" : ""
-                      }
-                      to={`contacts/${contact.id}`}
+                      className={({ isActive, isPending }) => (isActive ? 'active' : isPending ? 'pending' : '')}
+                      to={`cities/${city.id}`}
                     >
-                      {contact.first || contact.last ? (
-                        <>
-                          {contact.first} {contact.last}
-                        </>
-                      ) : (
-                        <i>No Name</i>
-                      )}{" "}
-                      {contact.favorite ? <span>★</span> : null}
+                      {city.name ? <>{city.name}</> : <i>No Name</i>}{' '}
                     </NavLink>
                   </li>
                 ))}
               </ul>
             ) : (
               <p>
-                <i>No contacts</i>
+                <i>No cities</i>
               </p>
             )}
           </nav>
         </div>
-        <div
-          className={
-            navigation.state === "loading" && !searching ? "loading" : ""
-          }
-          id="detail"
-        >
+        <div id="detail" className={navigation.state === 'loading' && !searching ? 'loading' : ''}>
           <Outlet />
         </div>
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
   );
